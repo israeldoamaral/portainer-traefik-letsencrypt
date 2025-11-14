@@ -1,0 +1,73 @@
+version: "3.8"
+
+services:
+  traefik:
+    image: traefik:v3.4
+    hostname: "anw-{{.Node.Hostname}}-{{.Service.Name}}-{{.Task.Slot}}"
+    command:
+      #As novas configurações do Modo Swarm
+      - --providers.swarm.endpoint=unix:///var/run/docker.sock
+      - --providers.swarm.exposedByDefault=false
+      - --providers.swarm.network=traefik_public
+
+      #Portas 80 Web e 443 Websecure e habilitar o HTTP3
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      - --entrypoints.name.http3
+      
+      # Dashboard habilitado
+      - --api.dashboard=true
+      - --api.insecure=false   # nunca use insecure em produção
+
+      #Parte do certificado SSL
+      - --certificatesresolvers.le.acme.email=israeldoamaral@gmail.com
+      - --certificatesresolvers.le.acme.storage=/letsencrypt/acme.json
+      - --certificatesresolvers.le.acme.httpchallenge.entrypoint=web
+      
+      #Redirecionamento de HTTP para HTTPS
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      
+      # Caso queira ver os Debugs. (Mas ele mostra qualquer tipo de erro caso esteja desativado)
+      #- --log.level=DEBUG
+
+    ports:
+      - target: 80
+        published: 80
+        protocol: tcp
+        mode: host
+      - target: 443
+        published: 443
+        protocol: tcp
+        mode: host
+    volumes:
+      - traefik_certs:/letsencrypt
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.traefik.rule=Host(`${DOMINIO_TRAEFIK}`)
+        - traefik.http.routers.traefik.entrypoints=websecure
+        - traefik.http.routers.traefik.tls=true
+        - traefik.http.routers.traefik.tls.certresolver=le
+        - traefik.http.services.traefik.loadbalancer.server.port=8080
+        - traefik.docker.network=traefik_public
+        # Middleware de Autenticação Básica (Use sua senha gerada)
+        - traefik.http.middlewares.traefik-auth.basicauth.users=<COLOQUE_SEU_USUARIO>:<COLOQUE_SUA_SENHA_HASHED>
+        # Aplique a middleware ao roteador
+        - traefik.http.routers.traefik.middlewares=traefik-auth
+
+    networks:
+      - traefik_public
+
+volumes:
+  traefik_certs:
+    external: true
+
+networks:
+  traefik_public:
+    external: true 
