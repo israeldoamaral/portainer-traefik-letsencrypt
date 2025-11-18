@@ -52,7 +52,7 @@ docker stack deploy -c portainer-agent-stack.yml portainer
 
 ### 2.2. Acesse o Portainer de inicio pelo ip do node na porta 9443
 ```
-http://<ip do node>:9443
+http://<ip do node>:9000
 ```   
 
 ## Agora vamos subir o Traefik   
