@@ -68,10 +68,9 @@ echo $(htpasswd -nb seuusuario sua_senha) | sed -e s/\\$/\\$\\$/g
 - Em Create stack, adicione o nome da sua stack ex: **traefik_v3**
 - Selecione **Web editor**
 - Copie e cole o manifesto **traefik.yml**
-- Com o manifesto colado altere o **certificatesresolvers.le.acme.email=<SEU-EMAIL@SEU-DOMINIO>** para seu e-mail
-- Procure por **traefik.http.routers.traefik.rule=Host(`${DOMINIO_TRAEFIK}`)** e altere para o seu dominio. ex. **traefik.seudominio.com.br**
+- Com o manifesto colado altere o **--certificatesresolvers.leresolver.acme.email=<SEU-EMAIL@SEU-DOMINIO>** para seu e-mail
+- Em **labels** procure por **traefik.http.routers.traefik-dashboard.rule=Host(`${DOMINIO_TRAEFIK}`)** e altere para o seu dominio. ex. **traefik.seudominio.com.br**
 - Agora procure por **traefik.http.middlewares.traefik-auth.basicauth.users=<COLOQUE_SEU_USUARIO>:<COLOQUE_SUA_SENHA_HASHED>** e altere pelo usuário e senha criado anteriormente.
-- Desmarque **Enable access control**
 - E por final clique no botão **Deploy the stack**
 
 
@@ -79,14 +78,16 @@ echo $(htpasswd -nb seuusuario sua_senha) | sed -e s/\\$/\\$\\$/g
 
 - Volte ao terminal e edite o manifesto do portainer **portainer-agent-stack.yml**
 - Descomente os **labels**
+- Altere o **traefik.http.routers.portainer.rule=Host(`portainer.seudominio.com.br`)** por seu dominio
 ```
-#      labels:
-#        - traefik.enable=true
-#        - traefik.http.routers.portainer.rule=Host(`portainer.israel.com.br`)
-#        - traefik.http.routers.portainer.entrypoints=websecure
-#        - traefik.http.routers.portainer.tls.certresolver=le
-#        - traefik.http.routers.portainer.service=portainer
-#        - traefik.http.services.portainer.loadbalancer.server.port=9000
+- "traefik.enable=true"
+- "traefik.http.routers.portainer.rule=Host(`portainer.seudominio.com.br`)"
+- "traefik.http.routers.portainer.entrypoints=websecure"
+- "traefik.http.services.portainer.loadbalancer.server.port=9000"
+- "traefik.http.routers.portainer.tls.certresolver=leresolver"
+- "traefik.http.routers.portainer.service=portainer"
+- "traefik.http.routers.portainer.tls=true"
+- "traefik.docker.network=traefik_public"
 ```   
 
 - Após descomentar, execute o comando para realizar o update da stack
