@@ -1,0 +1,76 @@
+
+version: "3.8"
+
+services:
+  minio:
+    image: quay.io/minio/minio:RELEASE.2025-02-03T21-03-04Z-cpuv1
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: aw3se4dr5ft6
+      # Opcional: ajuda redirecionamentos corretos via proxy
+      # MINIO_BROWSER_REDIRECT_URL: "https://minio-homo.hostweb.com.br"
+      # MINIO_SERVER_URL: "https://s3-homo.hostweb.com.br"
+    volumes:
+      - /minio-data:/data
+      - /minio-config:/root/.minio
+    networks:
+      - traefik_public
+
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.hostname == lab-01
+#		  - node.labels.environment == prd
+#          - node.role == manager
+      restart_policy:
+        condition: any
+
+      labels:
+        # Descoberta pelo Traefik
+        - "traefik.enable=true"
+        # Rede que o Traefik deve usar para alcançar o serviço
+        - "traefik.docker.network=traefik_public"
+
+        ##### Console MinIO (porta 9001) #####
+        - "traefik.http.routers.minio-console.rule=Host(`minio.seudominio.com.br`)"
+        - "traefik.http.routers.minio-console.entrypoints=websecure"
+        - "traefik.http.routers.minio-console.tls=true"
+        - "traefik.http.routers.minio-console.tls.certresolver=leresolver"
+        - "traefik.http.routers.minio-console.service=minio-console"
+        - "traefik.http.services.minio-console.loadbalancer.server.port=9001"
+        - "traefik.http.routers.minio-console.middlewares=minio-console-headers@swarm"
+
+        # Middleware de segurança para o console
+        - "traefik.http.middlewares.minio-console-headers.headers.SSLRedirect=true"
+        - "traefik.http.middlewares.minio-console-headers.headers.STSSeconds=315360000"
+        - "traefik.http.middlewares.minio-console-headers.headers.browserXSSFilter=true"
+        - "traefik.http.middlewares.minio-console-headers.headers.contentTypeNosniff=true"
+        - "traefik.http.middlewares.minio-console-headers.headers.forceSTSHeader=true"
+        - "traefik.http.middlewares.minio-console-headers.headers.SSLHost=minio.seudominio.com.br"
+        - "traefik.http.middlewares.minio-console-headers.headers.STSIncludeSubdomains=true"
+        - "traefik.http.middlewares.minio-console-headers.headers.STSPreload=true"
+
+        ##### API S3 (porta 9000) #####
+        - "traefik.http.routers.minio-api.rule=Host(`s3.seudominio.com.br`)"
+        - "traefik.http.routers.minio-api.entrypoints=websecure"
+        - "traefik.http.routers.minio-api.tls=true"
+        - "traefik.http.routers.minio-api.tls.certresolver=leresolver"
+        - "traefik.http.routers.minio-api.service=minio-api"
+        - "traefik.http.services.minio-api.loadbalancer.server.port=9000"
+        - "traefik.http.routers.minio-api.middlewares=minio-api-headers@swarm"
+
+        # Middleware de segurança para API S3
+        - "traefik.http.middlewares.minio-api-headers.headers.SSLRedirect=true"
+        - "traefik.http.middlewares.minio-api-headers.headers.STSSeconds=315360000"
+        - "traefik.http.middlewares.minio-api-headers.headers.browserXSSFilter=true"
+        - "traefik.http.middlewares.minio-api-headers.headers.contentTypeNosniff=true"
+        - "traefik.http.middlewares.minio-api-headers.headers.forceSTSHeader=true"
+        - "traefik.http.middlewares.minio-api-headers.headers.SSLHost=s3.seudominio.com.br"
+        - "traefik.http.middlewares.minio-api-headers.headers.STSIncludeSubdomains=true"
+        - "traefik.http.middlewares.minio-api-headers.headers.STSPreload=true"
+
+networks:
+  traefik_public:
+    external: true
