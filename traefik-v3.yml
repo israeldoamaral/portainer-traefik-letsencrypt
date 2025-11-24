@@ -44,6 +44,11 @@ services:
       - "traefik.http.middlewares.traefik-auth.basicauth.users=admin:$$apr1$$p1gkT0wO$$tok6B0.rm5lKZa6KDTsTr/"
       - "traefik.http.routers.traefik-dashboard.middlewares=traefik-auth"
 
+    logging:
+      driver: local #json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
     networks:
       - traefik_public
