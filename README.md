@@ -77,7 +77,8 @@ echo $(htpasswd -nb seuusuario sua_senha) | sed -e s/\\$/\\$\\$/g
 ### 3.2. Vamos adicionar uma rota no manifesto do Portainer para ser acessado via Traefik.
 
 - Volte ao terminal e edite o manifesto do portainer **portainer-agent-stack.yml**
-- Descomente os **labels**
+- Descomente os **labels** do service do agent
+- Descomente os **labels** do portainer
 - Altere o **traefik.http.routers.portainer.rule=Host(`portainer.seudominio.com.br`)** por seu dominio
 ```
 - "traefik.enable=true"
@@ -90,7 +91,7 @@ echo $(htpasswd -nb seuusuario sua_senha) | sed -e s/\\$/\\$\\$/g
 - "traefik.docker.network=traefik_public"
 ```   
 
-- Após descomentar, execute o comando para realizar o update da stack
+- Após descomentar, salve e execute o comando para realizar o update da stack
 ```
 docker stack deploy -c portainer-agent-stack.yml portainer
 ```    
