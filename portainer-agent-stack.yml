@@ -14,6 +14,12 @@ services:
       mode: global
       placement:
         constraints: [node.platform.os == linux]
+    logging:
+      driver: local #json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
 
   portainer:
     image: portainer/portainer-ce:lts
@@ -41,7 +47,12 @@ services:
         - "traefik.http.routers.portainer.service=portainer"
         - "traefik.http.routers.portainer.tls=true"
         - "traefik.docker.network=traefik_public"
-        
+    logging:
+      driver: local #json-file
+      options:
+        max-size: "10m"
+        max-file: "3"        
+
 networks:
   agent_network:
     driver: overlay
